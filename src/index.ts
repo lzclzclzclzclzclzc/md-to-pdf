@@ -51,14 +51,19 @@ export async function mdToPdf(input: Input, config: Partial<Config> = {}): Promi
 
 	const server = await serveDirectory(mergedConfig);
 
-	const browser = await puppeteer.launch({ devtools: config.devtools, ...config.launch_options });
+	try {
+		const browser = await puppeteer.launch({ devtools: config.devtools, ...config.launch_options });
 
-	const pdf = await convertMdToPdf(input, mergedConfig, { browser });
+		try {
+			const pdf = await convertMdToPdf(input, mergedConfig, { browser });
 
-	await browser.close();
-	await closeServer(server);
-
-	return pdf;
+			return pdf;
+		} finally {
+			await browser.close();
+		}
+	} finally {
+		await closeServer(server);
+	}
 }
 
 export default mdToPdf;

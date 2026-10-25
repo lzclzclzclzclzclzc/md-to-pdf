@@ -70,47 +70,49 @@ export async function generateOutput(
 
 	const page = await browser.newPage();
 
-	const urlPathname = join(relativePath, 'index.html').split(sep).join(posix.sep);
+	try {
+		const urlPathname = join(relativePath, 'index.html').split(sep).join(posix.sep);
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	await page.goto(`http://localhost:${config.port!}/${urlPathname}`); // make sure relative paths work as expected
-	await page.setContent(html); // overwrite the page content with what was generated from the markdown
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		await page.goto(`http://localhost:${config.port!}/${urlPathname}`); // make sure relative paths work as expected
+		await page.setContent(html); // overwrite the page content with what was generated from the markdown
 
-	for (const stylesheet of config.stylesheet) {
-		await page.addStyleTag(isHttpUrl(stylesheet) ? { url: stylesheet } : { path: stylesheet });
+		for (const stylesheet of config.stylesheet) {
+			await page.addStyleTag(isHttpUrl(stylesheet) ? { url: stylesheet } : { path: stylesheet });
+		}
+
+		if (config.css) {
+			await page.addStyleTag({ content: config.css });
+		}
+
+		for (const scriptTagOptions of config.script) {
+			await page.addScriptTag(scriptTagOptions);
+		}
+
+		/**
+		 * Trick to wait for network to be idle.
+		 *
+		 * @todo replace with page.waitForNetworkIdle once exposed
+		 * @see https://github.com/GoogleChrome/puppeteer/issues/3083
+		 */
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'networkidle0' }),
+			page.evaluate(() => history.pushState(undefined, '', '#')) /* eslint no-undef: off */,
+		]);
+
+		let outputFileContent: string | Buffer = '';
+
+		if (config.devtools) {
+			await new Promise((resolve) => page.on('close', resolve));
+		} else if (config.as_html) {
+			outputFileContent = await page.content();
+		} else {
+			await page.emulateMediaType(config.page_media_type);
+			outputFileContent = Buffer.from(await page.pdf(config.pdf_options));
+		}
+
+		return config.devtools ? (undefined as any) : { filename: config.dest, content: outputFileContent };
+	} finally {
+		await page.close();
 	}
-
-	if (config.css) {
-		await page.addStyleTag({ content: config.css });
-	}
-
-	for (const scriptTagOptions of config.script) {
-		await page.addScriptTag(scriptTagOptions);
-	}
-
-	/**
-	 * Trick to wait for network to be idle.
-	 *
-	 * @todo replace with page.waitForNetworkIdle once exposed
-	 * @see https://github.com/GoogleChrome/puppeteer/issues/3083
-	 */
-	await Promise.all([
-		page.waitForNavigation({ waitUntil: 'networkidle0' }),
-		page.evaluate(() => history.pushState(undefined, '', '#')) /* eslint no-undef: off */,
-	]);
-
-	let outputFileContent: string | Buffer = '';
-
-	if (config.devtools) {
-		await new Promise((resolve) => page.on('close', resolve));
-	} else if (config.as_html) {
-		outputFileContent = await page.content();
-	} else {
-		await page.emulateMediaType(config.page_media_type);
-		outputFileContent = await page.pdf(config.pdf_options);
-	}
-
-	await page.close();
-
-	return config.devtools ? (undefined as any) : { filename: config.dest, content: outputFileContent };
 }

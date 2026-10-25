@@ -160,7 +160,7 @@ async function main(args: typeof cliFlags, config: Config) {
 				await closeServer(server);
 			}
 		})
-		.catch((error: Error) => {
+		.catch(async (error: Error) => {
 			/**
 			 * In watch mode the error needs to be shown immediately because the `main` function's catch handler will never execute.
 			 *
@@ -170,6 +170,8 @@ async function main(args: typeof cliFlags, config: Config) {
 				return console.error(error);
 			}
 
+			await closeBrowser();
+			await closeServer(server);
 			throw error;
 		});
 }
