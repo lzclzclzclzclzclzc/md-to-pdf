@@ -72,6 +72,13 @@ pre {
 	white-space: pre-wrap;
 }
 
+pre,
+code,
+kbd,
+samp {
+	font-family: Consolas, 'Courier New', monospace;
+}
+
 h1 code,
 h2 code,
 h3 code,
@@ -85,7 +92,7 @@ pre code {
 	padding: 0.1em 0.375em;
 	border: 1px solid #f8f8f8;
 	border-radius: 0.25em;
-	font-family: monospace;
+	font-family: Consolas, 'Courier New', monospace;
 	font-size: 1.2em;
 }
 
