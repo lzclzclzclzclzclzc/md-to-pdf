@@ -20,6 +20,9 @@
 - Programmatic API
 - Supports `stdio`
 - Convert HTML (or [inline HTML](https://daringfireball.net/projects/markdown/syntax#html)) to PDF
+- Render LaTeX formulas and Mermaid diagrams offline, with bundled libraries
+
+This fork requires Node.js 20.19 or newer. Code uses `Consolas, 'Courier New', monospace`, matching VS Code's default font stack on Windows.
 
 ## Installation
 
@@ -168,7 +171,45 @@ Refer to the Puppeteer docs for more info about [header](https://pptr.dev/api/pu
 
 #### Formulas
 
-This can be achieved with [MathJax](https://www.mathjax.org/). A simple example can be found in [`/src/test/mathjax`](/src/test/mathjax).
+LaTeX math is rendered by the bundled [KaTeX](https://katex.org/) library by default. No CDN or TeX installation is needed. Supported delimiters are `$...$` and `\(...\)` for inline math, and `$$...$$` and `\[...\]` for display math on separate lines. TeX is parsed before Markdown so underscores, backslashes and matrix row separators are preserved. Code spans and fenced code blocks remain literal. Single-dollar formulas must not begin or end with whitespace; escaped dollars and ordinary prices such as `$5 and $10` remain text.
+
+```markdown
+Inline: $E = mc^2$ or \(a_1 + b_2\).
+
+$$
+\mathbf{A} = \begin{bmatrix}1 & 2 \\ 3 & 4\end{bmatrix}
+$$
+```
+
+KaTeX supports mathematical LaTeX, not entire LaTeX documents or every LaTeX package. Invalid or unsupported formulas stop conversion with an error. To use your own MathJax script, disable the built-in renderer with `--no-math`, or `math: false` in front matter/config. The existing [`/src/test/mathjax`](/src/test/mathjax) example demonstrates this.
+
+#### Mermaid diagrams
+
+Fenced `mermaid` blocks render to SVG before PDF or HTML export. The bundled library is loaded locally, and conversion waits for diagrams and fonts to finish. Multiple diagrams, including Chinese labels, are supported. Exported HTML contains the rendered SVGs and embedded KaTeX fonts, so it does not need a CDN for those features. External images, custom scripts, or custom stylesheets can still require network access.
+
+````markdown
+```mermaid
+flowchart LR
+    A[研究问题] --> B{证据充分?}
+    B -->|是| C[导出 PDF]
+    B -->|否| A
+```
+````
+
+Invalid diagrams stop conversion with an error. Use `--no-mermaid`, or `mermaid: false` in front matter/config, to preserve the code fences instead. Mermaid uses its strict security mode; interactive callbacks are disabled.
+
+The existing lint dependencies require Node.js 20 or 22 for development; conversion itself also works on Node.js 24.
+
+#### Windows development
+
+```powershell
+npm install
+npm run build
+npm link
+md2pdf ".\report.md"
+```
+
+`npm link` makes both `md2pdf` and `md-to-pdf` run this checkout. Rebuild after editing TypeScript. You can restore the registry version with `npm install -g md-to-pdf`.
 
 #### Default and Advanced Options
 
@@ -198,6 +239,8 @@ For default and advanced options see the following links. The default highlight.
 | `--md-file-encoding`    | `utf-8`, `windows1252`                                                |
 | `--stylesheet-encoding` | `utf-8`, `windows1252`                                                |
 | `--config-file`         | `path/to/config.json`                                                 |
+| `--no-math`             | Disable built-in KaTeX rendering                                      |
+| `--no-mermaid`          | Keep Mermaid fences as source code                                    |
 
 **`margin`:** instead of an object (as stated in the Puppeteer docs), it is also possible to pass a CSS-like string, e. g. `1em` (all), `1in 2in` (top/bottom right/left), `10mm 20mm 30mm` (top right/left bottom) or `1px 2px 3px 4px` (top right bottom left).
 
