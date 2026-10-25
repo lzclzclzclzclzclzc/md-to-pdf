@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [16, 18]
+        node: [20, 22]
         os: ['ubuntu-latest', 'windows-latest', 'macOS-latest']
 
     name: Node ${{ matrix.node }} on ${{ matrix.os }}
@@ -41,8 +41,7 @@ jobs:
         run: npx nyc ava src/test/lib.spec.ts --timeout=1m
 
       - name: test api
-        run: npx ava src/test/api.spec.ts --timeout=1m
+        run: npx ava src/test/api.spec.ts src/test/rendering.spec.ts --serial --timeout=2m
 
       - name: test cli
         run: npx ava src/test/cli.spec.ts --timeout=2m
-        if: matrix.os != 'windows-latest' # because they just time out ¯\_(ツ)_/¯

@@ -1,0 +1,2 @@
+# Match Prettier's source line endings on Windows as well as Unix.
+*.ts text eol=lf

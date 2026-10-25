@@ -1,19 +1,38 @@
 import test, { before } from 'ava';
 import { readFileSync, unlinkSync } from 'fs';
 import { basename, resolve } from 'path';
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf';
-import { TextItem } from 'pdfjs-dist/types/src/display/api';
+import puppeteer from 'puppeteer';
 import { mdToPdf } from '..';
 
 const getPdfTextContent = async (content: Buffer) => {
-	const doc = await getDocument({ data: content }).promise;
-	const page = await doc.getPage(1);
-	const textContent = (await page.getTextContent()).items
-		.filter((item): item is TextItem => 'str' in item)
-		.map(({ str }) => str)
-		.join('');
-
-	return textContent;
+	// Use the browser build to avoid native canvas / Node ABI dependencies on Windows.
+	const browser = await puppeteer.launch();
+	try {
+		const page = await browser.newPage();
+		await page.addScriptTag({ path: require.resolve('pdfjs-dist/build/pdf.js') });
+		await page.addScriptTag({ path: require.resolve('pdfjs-dist/build/pdf.worker.js') });
+		return await page.evaluate(
+			async (data: number[]) => {
+				const { pdfjsLib } = window as unknown as {
+					pdfjsLib: {
+						getDocument: (options: { data: Uint8Array }) => {
+							promise: Promise<{
+								getPage: (pageNumber: number) => Promise<{
+									getTextContent: () => Promise<{ items: Array<{ str?: string }> }>;
+								}>;
+							}>;
+						};
+					};
+				};
+				const doc = await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise;
+				const pdfPage = await doc.getPage(1);
+				return (await pdfPage.getTextContent()).items.map(({ str }) => str ?? '').join('');
+			},
+			[...content],
+		);
+	} finally {
+		await browser.close();
+	}
 };
 
 before(() => {
