@@ -68,8 +68,8 @@ export const convertMdToPdf = async (
 		const [argKey, argValue] = arg as [string, string];
 		const key = argKey.slice(2).replace(/-/g, '_');
 
-		if (argKey === '--no-math') {
-			config.math = !argValue;
+		if (argKey === '--no-math' || argKey === '--no-mermaid') {
+			config[argKey === '--no-math' ? 'math' : 'mermaid'] = !argValue;
 			continue;
 		}
 

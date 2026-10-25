@@ -3,6 +3,7 @@ import puppeteer, { Browser } from 'puppeteer';
 import { Config, HtmlConfig, PdfConfig } from './config';
 import { isHttpUrl } from './is-http-url';
 import { getMathStylesheet } from './math';
+import { renderMermaid } from './render-mermaid';
 
 export type Output = PdfOutput | HtmlOutput;
 
@@ -106,6 +107,11 @@ export async function generateOutput(
 		]);
 
 		await page.emulateMediaType(config.page_media_type);
+		await page.evaluate(async () => document.fonts.ready);
+		if (config.mermaid) {
+			await renderMermaid(page);
+		}
+
 		await page.evaluate(async () => document.fonts.ready);
 
 		let outputFileContent: string | Buffer = '';

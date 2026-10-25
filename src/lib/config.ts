@@ -39,6 +39,7 @@ export const defaultConfig: Config = {
 	devtools: false,
 	marked_extensions: [],
 	math: true,
+	mermaid: true,
 };
 
 /**
@@ -177,6 +178,9 @@ interface BasicConfig {
 
 	/** Render LaTeX math with bundled KaTeX. Default: `true`. */
 	math: boolean;
+
+	/** Render Mermaid code fences with the bundled browser library. Default: `true`. */
+	mermaid: boolean;
 }
 
 export type PuppeteerLaunchOptions = Parameters<typeof launch>[0];

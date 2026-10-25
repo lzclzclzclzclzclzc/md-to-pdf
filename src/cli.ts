@@ -45,6 +45,7 @@ export const cliFlags = arg({
 	'--config-file': String,
 	'--devtools': Boolean,
 	'--no-math': Boolean,
+	'--no-mermaid': Boolean,
 
 	// aliases
 	'-h': '--help',

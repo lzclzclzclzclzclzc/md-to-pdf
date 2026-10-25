@@ -101,6 +101,17 @@ pre code {
 	padding: 0.5em;
 }
 
+.mermaid {
+	text-align: center;
+	margin: 1em 0;
+	break-inside: avoid;
+}
+
+.mermaid svg {
+	max-width: 100%;
+	height: auto;
+}
+
 .katex-display {
 	max-width: 100%;
 	overflow-x: auto;

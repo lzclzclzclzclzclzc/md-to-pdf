@@ -27,6 +27,7 @@ const helpText = `
     --config-file ${chalk.dim('............')} Path to a JSON or JS configuration file
     --devtools ${chalk.dim('...............')} Open the browser with devtools instead of creating PDF
     --no-math ${chalk.dim('................')} Disable built-in LaTeX math rendering
+    --no-mermaid ${chalk.dim('.............')} Keep Mermaid code fences as source code
 
   ${chalk.dim.underline.bold('Examples:')}
 
