@@ -38,6 +38,7 @@ export const defaultConfig: Config = {
 	as_html: false,
 	devtools: false,
 	marked_extensions: [],
+	math: true,
 };
 
 /**
@@ -173,6 +174,9 @@ interface BasicConfig {
 	 * @see https://marked.js.org/using_pro#extensions
 	 */
 	marked_extensions: marked.MarkedExtension[];
+
+	/** Render LaTeX math with bundled KaTeX. Default: `true`. */
+	math: boolean;
 }
 
 export type PuppeteerLaunchOptions = Parameters<typeof launch>[0];

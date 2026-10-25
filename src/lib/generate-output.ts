@@ -2,6 +2,7 @@ import { join, posix, sep } from 'path';
 import puppeteer, { Browser } from 'puppeteer';
 import { Config, HtmlConfig, PdfConfig } from './config';
 import { isHttpUrl } from './is-http-url';
+import { getMathStylesheet } from './math';
 
 export type Output = PdfOutput | HtmlOutput;
 
@@ -77,6 +78,10 @@ export async function generateOutput(
 		await page.goto(`http://localhost:${config.port!}/${urlPathname}`); // make sure relative paths work as expected
 		await page.setContent(html); // overwrite the page content with what was generated from the markdown
 
+		if (config.math && (await page.$('.katex'))) {
+			await page.addStyleTag({ content: getMathStylesheet() });
+		}
+
 		for (const stylesheet of config.stylesheet) {
 			await page.addStyleTag(isHttpUrl(stylesheet) ? { url: stylesheet } : { path: stylesheet });
 		}
@@ -100,6 +105,9 @@ export async function generateOutput(
 			page.evaluate(() => history.pushState(undefined, '', '#')) /* eslint no-undef: off */,
 		]);
 
+		await page.emulateMediaType(config.page_media_type);
+		await page.evaluate(async () => document.fonts.ready);
+
 		let outputFileContent: string | Buffer = '';
 
 		if (config.devtools) {
@@ -107,7 +115,6 @@ export async function generateOutput(
 		} else if (config.as_html) {
 			outputFileContent = await page.content();
 		} else {
-			await page.emulateMediaType(config.page_media_type);
 			outputFileContent = Buffer.from(await page.pdf(config.pdf_options));
 		}
 

@@ -68,6 +68,11 @@ export const convertMdToPdf = async (
 		const [argKey, argValue] = arg as [string, string];
 		const key = argKey.slice(2).replace(/-/g, '_');
 
+		if (argKey === '--no-math') {
+			config.math = !argValue;
+			continue;
+		}
+
 		(config as Record<string, any>)[key] = jsonArgs.has(argKey) ? JSON.parse(argValue) : argValue;
 	}
 

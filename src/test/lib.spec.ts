@@ -69,6 +69,51 @@ test('getHtml should have the title set', (t) => {
 	t.regex(html, /<title>Foo<\/title>/);
 });
 
+test('math renders all four delimiters without Markdown changing TeX', (t) => {
+	const html = getHtml(
+		String.raw`Inline $x_1^2$ and \(y_2\).
+
+$$
+\begin{bmatrix}1 & 2 \\ 3 & 4\end{bmatrix}
+$$
+
+\[
+\frac{a}{b}
+\]
+`,
+		defaultConfig,
+	);
+
+	t.is((html.match(/class="katex"/g) ?? []).length, 4);
+	t.is((html.match(/class="katex-display"/g) ?? []).length, 2);
+	t.true(html.includes(String.raw`\begin{bmatrix}1 &amp; 2 \\ 3 &amp; 4\end{bmatrix}`));
+});
+
+test('math does not consume escaped dollars, prices or code examples', (t) => {
+	const html = getHtml('Prices $5 and $10. Escaped \\$x\\$. Code `$x$`.\n\n```tex\n$$x_1$$\n```', defaultConfig);
+
+	t.false(html.includes('class="katex"'));
+	t.true(html.includes('Prices $5 and $10'));
+	t.true(html.includes('<code>$x$</code>'));
+	t.true(html.replace(/<[^>]*>/g, '').includes('$$x_1$$'));
+});
+
+test('math can be disabled between documents without leaking extensions', (t) => {
+	t.true(getHtml('$x$', defaultConfig).includes('class="katex"'));
+	t.false(getHtml('$x$', { ...defaultConfig, math: false }).includes('class="katex"'));
+	t.true(getHtml('$x$', defaultConfig).includes('class="katex"'));
+});
+
+test('escaped square brackets in prose remain literal instead of becoming display math', (t) => {
+	const html = getHtml(String.raw`Escaped brackets: \[不是链接\], followed by text.`, defaultConfig);
+	t.false(html.includes('class="katex"'));
+	t.true(html.includes('[不是链接]'));
+});
+
+test('invalid LaTeX produces an actionable conversion error', (t) => {
+	t.throws(() => getHtml(String.raw`$\notARealCommand{x}$`, defaultConfig), { message: /Invalid LaTeX formula/ });
+});
+
 // --
 // get-marked
 

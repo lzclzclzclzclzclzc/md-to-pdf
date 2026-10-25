@@ -1,4 +1,5 @@
 ---
+math: false
 script:
   - path: src/test/mathjax/mathjax-config.js
   - url: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js
